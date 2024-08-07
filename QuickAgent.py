@@ -26,10 +26,18 @@ from deepgram import (
     Microphone,
 )
 
-load_dotenv()
+load_dotenv(dotenv_path='.env')
 
 class LanguageModelProcessor:
     def __init__(self):
+
+        # Ensure the DEEPGRAM_API_KEY is correctly set in your environment variables
+        groq_api_key = os.getenv("GROQ_API_KEY")
+
+        # Check if the API key is loaded correctly
+        if not groq_api_key:
+            raise ValueError("Groq API key not found in environment variables.")
+
         self.llm = ChatGroq(temperature=0, model_name="mixtral-8x7b-32768", groq_api_key=os.getenv("GROQ_API_KEY"))
         # self.llm = ChatOpenAI(temperature=0, model_name="gpt-4-0125-preview", openai_api_key=os.getenv("OPENAI_API_KEY"))
         # self.llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo-0125", openai_api_key=os.getenv("OPENAI_API_KEY"))
@@ -37,8 +45,11 @@ class LanguageModelProcessor:
         self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
         # Load the system prompt from a file
-        with open('system_prompt.txt', 'r') as file:
-            system_prompt = file.read().strip()
+        try:
+            with open('system_prompt.txt', 'r') as file:
+                system_prompt = file.read().strip()
+        except FileNotFoundError:
+            print(f"File not found. Current directory: {os.getcwd()}")
         
         self.prompt = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(system_prompt),
@@ -70,6 +81,10 @@ class LanguageModelProcessor:
 class TextToSpeech:
     # Set your Deepgram API Key and desired voice model
     DG_API_KEY = os.getenv("DEEPGRAM_API_KEY")
+            # Check if the API key is loaded correctly
+    if not DG_API_KEY:
+            raise ValueError("DEEPGRAM API key not found in environment variables.")
+    
     MODEL_NAME = "aura-helios-en"  # Example model name, change as needed
 
     @staticmethod
@@ -138,7 +153,7 @@ async def get_transcript(callback):
         config = DeepgramClientOptions(options={"keepalive": "true"})
         deepgram: DeepgramClient = DeepgramClient("", config)
 
-        dg_connection = deepgram.listen.asynclive.v("1")
+        dg_connection = deepgram.listen.asyncwebsocket.v("1")
         print ("Listening...")
 
         async def on_message(self, result, **kwargs):

@@ -31,7 +31,7 @@ async def get_transcript():
         config = DeepgramClientOptions(options={"keepalive": "true"})
         deepgram: DeepgramClient = DeepgramClient("", config)
 
-        dg_connection = deepgram.listen.asynclive.v("1")
+        dg_connection = deepgram.listen.asyncwebsocket.v("1")
 
         async def on_message(self, result, **kwargs):
             # print (result)
